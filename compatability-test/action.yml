@@ -1,0 +1,76 @@
+name: Test compatibility with Docusaurus versions
+description: A GitHub Action to test the compatibility of supported docusaurus versions
+
+inputs:
+  dependencies:
+    description: 'List of dependencies to test compatibility'
+    required: true
+  devDependencies:
+    description: 'List of devDependencies to test compatibility'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download versions
+      run: |
+        curl https://raw.githubusercontent.com/facebook/docusaurus/main/website/versions.json
+      id: versions
+      shell: bash
+
+    - name: Extract available version numbers
+      run: |
+        echo "${{ steps.versions.outputs.json }}" | jq -r '.[].name'
+      id: version_numbers
+      shell: bash
+
+    - name: Detect package manager
+      run: |
+        if [ -f yarn.lock ]; then
+          echo "yarn"
+        else
+          echo "npm"
+        fi
+      id: package_manager
+      shell: bash
+
+    - name: Install version
+      run: |
+        for dependency in ${{ fromJson(inputs.dependencies) }}
+          do
+            for version in ${{ steps.version_numbers.outputs.stdout }}
+            do
+              if [ "${{ steps.package_manager.outputs.stdout }}" == "yarn" ]; then
+                yarn add "${dependency}@${version}"
+              else
+                npm install "${dependency}@${version}"
+              fi
+            done
+          done
+
+        for dependency in ${{ fromJson(inputs.devDependencies) }}
+          do
+            for version in ${{ steps.version_numbers.outputs.stdout }}
+            do
+              if [ "${{ steps.package_manager.outputs.stdout }}" == "yarn" ]; then
+                yarn add "${dependency}@${version} --dev"
+              else
+                npm install "${dependency}@${version} --save-dev"
+              fi
+            done
+          done
+      shell: bash
+
+    - name: Test version
+      run: |
+        for version in ${{ steps.version_numbers.outputs.stdout }}
+        do
+          if [ "${{ steps.package_manager.outputs.stdout }}" == "yarn" ]; then
+            yarn test
+          else
+            npm test
+          fi
+        done
+      shell: bash
+
+
