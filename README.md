@@ -1,2 +1,3 @@
-# docusaurus-actions
-A collection of actions to maintain docusaurus repositories
+# docusaurus-version-compatibility
+
+A Docusaurus version compatibiluty tester.
