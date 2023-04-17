@@ -75,12 +75,16 @@ async function install(): Promise<void> {
 }
 
 async function cacheNodeModules(): Promise<void> {
-  await io.cp('node_modules', 'node_modules_temp');
+  await io.cp('node_modules', 'node_modules_temp', {
+    recursive: true,
+  });
 }
 
 async function restoreNodeModules(): Promise<void> {
   await io.rmRF('node_modules');
-  await io.cp('node_modules_temp', 'node_modules');
+  await io.cp('node_modules_temp', 'node_modules', {
+    recursive: true,
+  });
 }
 
 async function testDocusaurusVersion(version: string): Promise<void> {
