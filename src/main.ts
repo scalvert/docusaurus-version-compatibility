@@ -7,8 +7,16 @@ import axios from 'axios';
 import { pkgUp } from 'pkg-up';
 
 type ExecPackageManager = (args: string[]) => Promise<number>;
+type PackageManagerName = 'yarn' | 'npm';
+type PackageManagerOptions = {
+  name: PackageManagerName;
+  lockFileName: 'yarn.lock' | 'package-lock.json';
+  cmd: ExecPackageManager;
+  saveDevOption: string;
+};
 
-let execPackageManager: ExecPackageManager;
+const CACHE_KEY = 'docusaurus-version-compatibility';
+let packageManager: PackageManagerOptions;
 
 async function run(): Promise<void> {
   try {
@@ -17,7 +25,7 @@ async function run(): Promise<void> {
     const response = await axios.get(versionsJsonUrl);
     const versions: string[] = response.data;
 
-    execPackageManager = getPackageManagerCmd();
+    packageManager = getPackageManager();
 
     await install();
 
@@ -39,21 +47,31 @@ function isError(e: unknown): e is Error {
   return isObject(e) && 'message' in e;
 }
 
-function getPackageManager(cwd: string = process.cwd()): 'npm' | 'yarn' {
+function getPackageManager(cwd: string = process.cwd()): PackageManagerOptions {
   const hasYarn = fs.existsSync(path.join(cwd, 'yarn.lock'));
 
   if (hasYarn) {
-    return 'yarn';
+    return {
+      name: 'yarn',
+      saveDevOption: '--dev',
+      lockFileName: 'yarn.lock',
+      cmd: getPackageManagerCmd('yarn'),
+    };
   }
 
-  return 'npm';
+  return {
+    name: 'npm',
+    saveDevOption: '--save-dev',
+    lockFileName: 'package-lock.json',
+    cmd: getPackageManagerCmd('npm'),
+  };
 }
 
 function getPackageManagerCmd(
-  packageManager: 'npm' | 'yarn' = getPackageManager()
+  packageManagerName: PackageManagerName
 ): ExecPackageManager {
   return async (args: string[]) => {
-    return await exec.exec(packageManager, args);
+    return await exec.exec(packageManagerName, args);
   };
 }
 
@@ -70,17 +88,29 @@ async function getPackageJson(): Promise<Record<string, unknown>> {
 
 async function install(): Promise<void> {
   if (!fs.existsSync('node_modules')) {
-    await execPackageManager(['install']);
+    await packageManager.cmd(['install']);
   }
 }
 
-async function cacheNodeModules(): Promise<void> {
-  await io.cp('node_modules', 'node_modules_temp', {
+async function setupTest(): Promise<void> {
+  await io.cp('package.json', `package.json.${CACHE_KEY}`);
+  await io.cp(
+    packageManager.lockFileName,
+    `${packageManager.lockFileName}.${CACHE_KEY}`
+  );
+  await io.cp('node_modules', `node_modules.${CACHE_KEY}`, {
     recursive: true,
   });
 }
 
-async function restoreNodeModules(): Promise<void> {
+async function teardownTest(): Promise<void> {
+  await io.rmRF('package.json');
+  await io.cp(`package.json.${CACHE_KEY}`, 'package.json');
+  await io.rmRF(packageManager.lockFileName);
+  await io.cp(
+    `${packageManager.lockFileName}.${CACHE_KEY}`,
+    packageManager.lockFileName
+  );
   await io.rmRF('node_modules');
   await io.cp('node_modules_temp', 'node_modules', {
     recursive: true,
@@ -90,14 +120,14 @@ async function restoreNodeModules(): Promise<void> {
 async function testDocusaurusVersion(version: string): Promise<void> {
   core.info(`Testing Docusaurus version ${version}`);
 
-  await cacheNodeModules();
+  await setupTest();
 
   const packageJson = await getPackageJson();
 
   if (packageJson.dependencies) {
     for (const [key] of Object.entries(packageJson.dependencies)) {
       if (key.includes('docusaurus')) {
-        execPackageManager(['add', `${key}@${version}`]);
+        packageManager.cmd(['add', `${key}@${version}`]);
       }
     }
   }
@@ -105,18 +135,22 @@ async function testDocusaurusVersion(version: string): Promise<void> {
   if (packageJson.devDependencies) {
     for (const [key] of Object.entries(packageJson.devDependencies)) {
       if (key.includes('docusaurus')) {
-        execPackageManager(['add', `${key}@${version}`]);
+        packageManager.cmd([
+          'add',
+          packageManager.saveDevOption,
+          `${key}@${version}`,
+        ]);
       }
     }
   }
 
-  const exitCode = await execPackageManager(['test']);
+  const exitCode = await packageManager.cmd(['test']);
 
   if (exitCode !== 0) {
     core.setFailed(`Tests failed for Docusaurus version ${version}`);
   }
 
-  await restoreNodeModules();
+  await teardownTest();
 }
 
 run();

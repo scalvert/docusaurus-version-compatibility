@@ -40,13 +40,14 @@ const exec = __importStar(__nccwpck_require__(1514));
 const io = __importStar(__nccwpck_require__(7436));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const pkg_up_1 = __nccwpck_require__(4212);
-let execPackageManager;
+const CACHE_KEY = 'docusaurus-version-compatibility';
+let packageManager;
 async function run() {
     try {
         const versionsJsonUrl = 'https://raw.githubusercontent.com/facebook/docusaurus/main/website/versions.json';
         const response = await axios_1.default.get(versionsJsonUrl);
         const versions = response.data;
-        execPackageManager = getPackageManagerCmd();
+        packageManager = getPackageManager();
         await install();
         for (const version of versions) {
             await testDocusaurusVersion(version);
@@ -67,13 +68,23 @@ function isError(e) {
 function getPackageManager(cwd = process.cwd()) {
     const hasYarn = fs_1.default.existsSync(path_1.default.join(cwd, 'yarn.lock'));
     if (hasYarn) {
-        return 'yarn';
+        return {
+            name: 'yarn',
+            saveDevOption: '--dev',
+            lockFileName: 'yarn.lock',
+            cmd: getPackageManagerCmd('yarn'),
+        };
     }
-    return 'npm';
+    return {
+        name: 'npm',
+        saveDevOption: '--save-dev',
+        lockFileName: 'package-lock.json',
+        cmd: getPackageManagerCmd('npm'),
+    };
 }
-function getPackageManagerCmd(packageManager = getPackageManager()) {
+function getPackageManagerCmd(packageManagerName) {
     return async (args) => {
-        return await exec.exec(packageManager, args);
+        return await exec.exec(packageManagerName, args);
     };
 }
 async function getPackageJson() {
@@ -86,15 +97,21 @@ async function getPackageJson() {
 }
 async function install() {
     if (!fs_1.default.existsSync('node_modules')) {
-        await execPackageManager(['install']);
+        await packageManager.cmd(['install']);
     }
 }
-async function cacheNodeModules() {
-    await io.cp('node_modules', 'node_modules_temp', {
+async function setupTest() {
+    await io.cp('package.json', `package.json.${CACHE_KEY}`);
+    await io.cp(packageManager.lockFileName, `${packageManager.lockFileName}.${CACHE_KEY}`);
+    await io.cp('node_modules', `node_modules.${CACHE_KEY}`, {
         recursive: true,
     });
 }
-async function restoreNodeModules() {
+async function teardownTest() {
+    await io.rmRF('package.json');
+    await io.cp(`package.json.${CACHE_KEY}`, 'package.json');
+    await io.rmRF(packageManager.lockFileName);
+    await io.cp(`${packageManager.lockFileName}.${CACHE_KEY}`, packageManager.lockFileName);
     await io.rmRF('node_modules');
     await io.cp('node_modules_temp', 'node_modules', {
         recursive: true,
@@ -102,27 +119,31 @@ async function restoreNodeModules() {
 }
 async function testDocusaurusVersion(version) {
     core.info(`Testing Docusaurus version ${version}`);
-    await cacheNodeModules();
+    await setupTest();
     const packageJson = await getPackageJson();
     if (packageJson.dependencies) {
         for (const [key] of Object.entries(packageJson.dependencies)) {
             if (key.includes('docusaurus')) {
-                execPackageManager(['add', `${key}@${version}`]);
+                packageManager.cmd(['add', `${key}@${version}`]);
             }
         }
     }
     if (packageJson.devDependencies) {
         for (const [key] of Object.entries(packageJson.devDependencies)) {
             if (key.includes('docusaurus')) {
-                execPackageManager(['add', `${key}@${version}`]);
+                packageManager.cmd([
+                    'add',
+                    packageManager.saveDevOption,
+                    `${key}@${version}`,
+                ]);
             }
         }
     }
-    const exitCode = await execPackageManager(['test']);
+    const exitCode = await packageManager.cmd(['test']);
     if (exitCode !== 0) {
         core.setFailed(`Tests failed for Docusaurus version ${version}`);
     }
-    await restoreNodeModules();
+    await teardownTest();
 }
 run();
 
