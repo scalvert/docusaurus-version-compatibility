@@ -10,6 +10,7 @@ type ExecPackageManager = (args: string[]) => Promise<number>;
 type PackageManagerName = 'yarn' | 'npm';
 type PackageManagerOptions = {
   name: PackageManagerName;
+  installCmd: string;
   lockFileName: 'yarn.lock' | 'package-lock.json';
   cmd: ExecPackageManager;
   saveDevOption: string;
@@ -53,6 +54,7 @@ function getPackageManager(cwd: string = process.cwd()): PackageManagerOptions {
   if (hasYarn) {
     return {
       name: 'yarn',
+      installCmd: 'add',
       saveDevOption: '--dev',
       lockFileName: 'yarn.lock',
       cmd: getPackageManagerCmd('yarn'),
@@ -61,6 +63,7 @@ function getPackageManager(cwd: string = process.cwd()): PackageManagerOptions {
 
   return {
     name: 'npm',
+    installCmd: 'install',
     saveDevOption: '--save-dev',
     lockFileName: 'package-lock.json',
     cmd: getPackageManagerCmd('npm'),
@@ -123,25 +126,36 @@ async function testDocusaurusVersion(version: string): Promise<void> {
   await setupTest();
 
   const packageJson = await getPackageJson();
+  let dependencies: string[] = [];
+  let devDependencies: string[] = [];
+  const buildPackages = (dependency: string): string =>
+    `${dependency}@${version}`;
 
   if (packageJson.dependencies) {
-    for (const [key] of Object.entries(packageJson.dependencies)) {
-      if (key.includes('docusaurus')) {
-        packageManager.cmd(['add', `${key}@${version}`]);
+    dependencies = Object.keys(packageJson.dependencies).filter(
+      (dependency: string) => {
+        return dependency.includes('docusaurus');
       }
-    }
+    );
+
+    packageManager.cmd([
+      packageManager.installCmd,
+      dependencies.map(buildPackages).join(' '),
+    ]);
   }
 
   if (packageJson.devDependencies) {
-    for (const [key] of Object.entries(packageJson.devDependencies)) {
-      if (key.includes('docusaurus')) {
-        packageManager.cmd([
-          'add',
-          packageManager.saveDevOption,
-          `${key}@${version}`,
-        ]);
+    devDependencies = Object.keys(packageJson.devDependencies).filter(
+      (dependency: string) => {
+        return dependency.includes('docusaurus');
       }
-    }
+    );
+
+    packageManager.cmd([
+      packageManager.installCmd,
+      packageManager.saveDevOption,
+      devDependencies.map(buildPackages).join(' '),
+    ]);
   }
 
   const exitCode = await packageManager.cmd(['test']);

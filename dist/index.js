@@ -70,6 +70,7 @@ function getPackageManager(cwd = process.cwd()) {
     if (hasYarn) {
         return {
             name: 'yarn',
+            installCmd: 'add',
             saveDevOption: '--dev',
             lockFileName: 'yarn.lock',
             cmd: getPackageManagerCmd('yarn'),
@@ -77,6 +78,7 @@ function getPackageManager(cwd = process.cwd()) {
     }
     return {
         name: 'npm',
+        installCmd: 'install',
         saveDevOption: '--save-dev',
         lockFileName: 'package-lock.json',
         cmd: getPackageManagerCmd('npm'),
@@ -121,23 +123,27 @@ async function testDocusaurusVersion(version) {
     core.info(`Testing Docusaurus version ${version}`);
     await setupTest();
     const packageJson = await getPackageJson();
+    let dependencies = [];
+    let devDependencies = [];
+    const buildPackages = (dependency) => `${dependency}@${version}`;
     if (packageJson.dependencies) {
-        for (const [key] of Object.entries(packageJson.dependencies)) {
-            if (key.includes('docusaurus')) {
-                packageManager.cmd(['add', `${key}@${version}`]);
-            }
-        }
+        dependencies = Object.keys(packageJson.dependencies).filter((dependency) => {
+            return dependency.includes('docusaurus');
+        });
+        packageManager.cmd([
+            packageManager.installCmd,
+            dependencies.map(buildPackages).join(' '),
+        ]);
     }
     if (packageJson.devDependencies) {
-        for (const [key] of Object.entries(packageJson.devDependencies)) {
-            if (key.includes('docusaurus')) {
-                packageManager.cmd([
-                    'add',
-                    packageManager.saveDevOption,
-                    `${key}@${version}`,
-                ]);
-            }
-        }
+        devDependencies = Object.keys(packageJson.devDependencies).filter((dependency) => {
+            return dependency.includes('docusaurus');
+        });
+        packageManager.cmd([
+            packageManager.installCmd,
+            packageManager.saveDevOption,
+            devDependencies.map(buildPackages).join(' '),
+        ]);
     }
     const exitCode = await packageManager.cmd(['test']);
     if (exitCode !== 0) {
