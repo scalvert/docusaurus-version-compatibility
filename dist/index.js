@@ -29,47 +29,91 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-/* eslint-disable no-console */
-const fs_1 = __importDefault(__nccwpck_require__(7147));
 const core = __importStar(__nccwpck_require__(2186));
-const axios_1 = __importDefault(__nccwpck_require__(8757));
-const pkg_up_1 = __nccwpck_require__(4212);
-// @tsconfig/docusaurus is not versioned using the same semver scheme as the rest of the docusaurus packages, so skipping
-const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
+const utils_1 = __nccwpck_require__(918);
 async function run() {
     try {
         if (core.getInput('setup-versions')) {
-            console.log('Setting up versions');
-            setupVersions();
+            (0, utils_1.setupVersions)();
         }
         else {
-            await testDocusaurusVersion(core.getInput('version'));
+            await (0, utils_1.testDocusaurusVersion)(core.getInput('version'));
         }
     }
     catch (error) {
-        if (isError(error)) {
+        if ((0, utils_1.isError)(error)) {
             core.setFailed(error.message);
         }
     }
 }
+async function postRun() {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const coreVersion = (__nccwpck_require__(5742).version);
+    core.info(`Docusaurus version tested: ${coreVersion}`);
+}
+if (!utils_1.IS_POST) {
+    run();
+}
+else {
+    postRun();
+}
+
+
+/***/ }),
+
+/***/ 918:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.testDocusaurusVersion = exports.getPackageJsonPath = exports.isError = exports.setupVersions = exports.IS_POST = void 0;
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const axios_1 = __importDefault(__nccwpck_require__(8757));
+const pkg_up_1 = __nccwpck_require__(4212);
+const core = __importStar(__nccwpck_require__(2186));
+const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
+exports.IS_POST = !!core.getState('isPost');
 async function setupVersions() {
     const versionsJsonUrl = 'https://raw.githubusercontent.com/facebook/docusaurus/main/website/versions.json';
     const response = await axios_1.default.get(versionsJsonUrl);
     const versions = response.data;
-    console.log(JSON.stringify(versions, null, 2));
+    core.debug(`Docusaurus versions: ${versions}`);
     core.setOutput('docusaurus-versions', versions);
     return versions;
 }
-function isObject(e) {
-    return e !== null && typeof e === 'object' && !Array.isArray(e);
-}
+exports.setupVersions = setupVersions;
 function isError(e) {
     return isObject(e) && 'message' in e;
 }
+exports.isError = isError;
 async function getPackageJsonPath() {
     const packageJsonPath = await (0, pkg_up_1.pkgUp)();
     if (!packageJsonPath) {
@@ -78,24 +122,9 @@ async function getPackageJsonPath() {
     }
     return packageJsonPath;
 }
-async function getPackageJson() {
-    const packageJsonPath = await getPackageJsonPath();
-    return JSON.parse(fs_1.default.readFileSync(packageJsonPath, 'utf8'));
-}
-async function writePackageJson(packageJson) {
-    const packageJsonPath = await getPackageJsonPath();
-    fs_1.default.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-}
-function buildReplacementDepencencyVersion(existingVersion, newVersion) {
-    const firstChar = existingVersion[0];
-    // preserve existing floating constraint
-    if (['^', '~'].includes(firstChar)) {
-        return `${firstChar}${newVersion}`;
-    }
-    return newVersion;
-}
+exports.getPackageJsonPath = getPackageJsonPath;
 async function testDocusaurusVersion(version) {
-    console.log(`Testing Docusaurus version ${version}`);
+    core.info(`Testing Docusaurus version ${version}`);
     const packageJson = await getPackageJson();
     if (packageJson.dependencies) {
         for (const [dependency, currentVersion] of Object.entries(packageJson.dependencies)) {
@@ -117,10 +146,29 @@ async function testDocusaurusVersion(version) {
             }
         }
     }
-    core.debug(JSON.stringify(packageJson, null, 2));
+    core.info(JSON.stringify(packageJson, null, 2));
     await writePackageJson(packageJson);
 }
-run();
+exports.testDocusaurusVersion = testDocusaurusVersion;
+function isObject(e) {
+    return e !== null && typeof e === 'object' && !Array.isArray(e);
+}
+async function getPackageJson() {
+    const packageJsonPath = await getPackageJsonPath();
+    return JSON.parse(fs_1.default.readFileSync(packageJsonPath, 'utf8'));
+}
+async function writePackageJson(packageJson) {
+    const packageJsonPath = await getPackageJsonPath();
+    fs_1.default.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+function buildReplacementDepencencyVersion(existingVersion, newVersion) {
+    const firstChar = existingVersion[0];
+    // preserve existing floating constraint
+    if (['^', '~'].includes(firstChar)) {
+        return `${firstChar}${newVersion}`;
+    }
+    return newVersion;
+}
 
 
 /***/ }),
@@ -6257,6 +6305,14 @@ function version(uuid) {
 
 var _default = version;
 exports["default"] = _default;
+
+/***/ }),
+
+/***/ 5742:
+/***/ ((module) => {
+
+module.exports = eval("require")("@docusaurus/core/package");
+
 
 /***/ }),
 
