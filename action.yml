@@ -1,6 +1,16 @@
 name: 'docusaurus-version-compatibility'
 description: 'A Docusaurus version compatibility tester'
 author: 'scalvert <steve.calvert@gmail.com>'
+inputs:
+  version:
+    description: 'The version of Docusaurus to test'
+    required: true
+  setup-versions:
+    description: 'Sets up the version compatibility test with the associated versions'
+    required: false
+outputs:
+  versions:
+    description: 'The versions of Docusaurus to test'
 runs:
   using: 'node16'
   main: 'dist/index.js'
