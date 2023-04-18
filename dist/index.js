@@ -130,20 +130,24 @@ async function testDocusaurusVersion(version) {
         dependencies = Object.keys(packageJson.dependencies).filter((dependency) => {
             return dependency.includes('docusaurus');
         });
-        packageManager.cmd([
-            packageManager.installCmd,
-            dependencies.map(buildPackages).join(' '),
-        ]);
+        if (dependencies.length > 0) {
+            packageManager.cmd([
+                packageManager.installCmd,
+                dependencies.map(buildPackages).join(' '),
+            ]);
+        }
     }
     if (packageJson.devDependencies) {
         devDependencies = Object.keys(packageJson.devDependencies).filter((dependency) => {
             return dependency.includes('docusaurus');
         });
-        packageManager.cmd([
-            packageManager.installCmd,
-            packageManager.saveDevOption,
-            devDependencies.map(buildPackages).join(' '),
-        ]);
+        if (devDependencies.length > 0) {
+            packageManager.cmd([
+                packageManager.installCmd,
+                packageManager.saveDevOption,
+                devDependencies.map(buildPackages).join(' '),
+            ]);
+        }
     }
     const exitCode = await packageManager.cmd(['test']);
     if (exitCode !== 0) {

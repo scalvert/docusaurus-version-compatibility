@@ -138,10 +138,12 @@ async function testDocusaurusVersion(version: string): Promise<void> {
       }
     );
 
-    packageManager.cmd([
-      packageManager.installCmd,
-      dependencies.map(buildPackages).join(' '),
-    ]);
+    if (dependencies.length > 0) {
+      packageManager.cmd([
+        packageManager.installCmd,
+        dependencies.map(buildPackages).join(' '),
+      ]);
+    }
   }
 
   if (packageJson.devDependencies) {
@@ -151,11 +153,13 @@ async function testDocusaurusVersion(version: string): Promise<void> {
       }
     );
 
-    packageManager.cmd([
-      packageManager.installCmd,
-      packageManager.saveDevOption,
-      devDependencies.map(buildPackages).join(' '),
-    ]);
+    if (devDependencies.length > 0) {
+      packageManager.cmd([
+        packageManager.installCmd,
+        packageManager.saveDevOption,
+        devDependencies.map(buildPackages).join(' '),
+      ]);
+    }
   }
 
   const exitCode = await packageManager.cmd(['test']);
