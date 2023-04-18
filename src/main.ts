@@ -17,6 +17,8 @@ type PackageManagerOptions = {
 };
 
 const CACHE_KEY = 'docusaurus-version-compatibility';
+// @tsconfig/docusaurus is not versioned using the same semver scheme as the rest of the docusaurus packages, so skipping
+const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
 let packageManager: PackageManagerOptions;
 
 async function run(): Promise<void> {
@@ -125,11 +127,11 @@ async function testDocusaurusVersion(version: string): Promise<void> {
 
   await setupTest();
 
-  const packageJson = await getPackageJson();
   let dependencies: string[] = [];
   let devDependencies: string[] = [];
+  const packageJson = await getPackageJson();
   const buildPackages = (dependency: string): string =>
-    `${dependency}@^${version}`;
+    `${dependency}@${version}`;
 
   if (packageJson.dependencies) {
     dependencies = Object.keys(packageJson.dependencies).filter(
@@ -151,8 +153,7 @@ async function testDocusaurusVersion(version: string): Promise<void> {
       (dependency: string) => {
         return (
           dependency.includes('docusaurus') &&
-          // @tsconfig/docusaurus is not versioned using the same semver scheme as the rest of the docusaurus packages, so skipping
-          dependency !== '@tsconfig/docusaurus'
+          !EXCLUDED_PACKAGES.includes(dependency)
         );
       }
     );

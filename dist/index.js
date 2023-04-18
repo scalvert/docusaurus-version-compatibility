@@ -41,6 +41,8 @@ const io = __importStar(__nccwpck_require__(7436));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const pkg_up_1 = __nccwpck_require__(4212);
 const CACHE_KEY = 'docusaurus-version-compatibility';
+// @tsconfig/docusaurus is not versioned using the same semver scheme as the rest of the docusaurus packages, so skipping
+const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
 let packageManager;
 async function run() {
     try {
@@ -122,10 +124,10 @@ async function teardownTest() {
 async function testDocusaurusVersion(version) {
     core.info(`Testing Docusaurus version ${version}`);
     await setupTest();
-    const packageJson = await getPackageJson();
     let dependencies = [];
     let devDependencies = [];
-    const buildPackages = (dependency) => `${dependency}@^${version}`;
+    const packageJson = await getPackageJson();
+    const buildPackages = (dependency) => `${dependency}@${version}`;
     if (packageJson.dependencies) {
         dependencies = Object.keys(packageJson.dependencies).filter((dependency) => {
             return dependency.includes('docusaurus');
@@ -140,8 +142,7 @@ async function testDocusaurusVersion(version) {
     if (packageJson.devDependencies) {
         devDependencies = Object.keys(packageJson.devDependencies).filter((dependency) => {
             return (dependency.includes('docusaurus') &&
-                // @tsconfig/docusaurus is not versioned using the same semver scheme as the rest of the docusaurus packages, so skipping
-                dependency !== '@tsconfig/docusaurus');
+                !EXCLUDED_PACKAGES.includes(dependency));
         });
         if (devDependencies.length > 0) {
             packageManager.cmd([
