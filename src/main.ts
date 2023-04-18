@@ -149,7 +149,11 @@ async function testDocusaurusVersion(version: string): Promise<void> {
   if (packageJson.devDependencies) {
     devDependencies = Object.keys(packageJson.devDependencies).filter(
       (dependency: string) => {
-        return dependency.includes('docusaurus');
+        return (
+          dependency.includes('docusaurus') &&
+          // @tsconfig/docusaurus is not versioned using the same semver scheme as the rest of the docusaurus packages, so skipping
+          dependency !== '@tsconfig/docusaurus'
+        );
       }
     );
 
