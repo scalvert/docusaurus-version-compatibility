@@ -33,6 +33,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+/* eslint-disable no-console */
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
@@ -42,7 +43,7 @@ const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
 async function run() {
     try {
         if (core.getInput('setup-versions')) {
-            core.debug('Setting up versions');
+            console.log('Setting up versions');
             setupVersions();
         }
         else {
@@ -59,7 +60,7 @@ async function setupVersions() {
     const versionsJsonUrl = 'https://raw.githubusercontent.com/facebook/docusaurus/main/website/versions.json';
     const response = await axios_1.default.get(versionsJsonUrl);
     const versions = response.data;
-    core.debug(JSON.stringify(versions, null, 2));
+    console.log(JSON.stringify(versions, null, 2));
     core.setOutput('docusarus-versions', {
         'docusaurus-version': versions,
     });
@@ -96,7 +97,7 @@ function buildReplacementDepencencyVersion(existingVersion, newVersion) {
     return newVersion;
 }
 async function testDocusaurusVersion(version) {
-    core.info(`Testing Docusaurus version ${version}`);
+    console.log(`Testing Docusaurus version ${version}`);
     const packageJson = await getPackageJson();
     if (packageJson.dependencies) {
         for (const [dependency, currentVersion] of Object.entries(packageJson.dependencies)) {

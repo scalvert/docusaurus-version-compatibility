@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs';
 import * as core from '@actions/core';
 import axios from 'axios';
@@ -10,7 +11,7 @@ const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
 async function run(): Promise<void> {
   try {
     if (core.getInput('setup-versions')) {
-      core.debug('Setting up versions');
+      console.log('Setting up versions');
 
       setupVersions();
     } else {
@@ -29,7 +30,7 @@ async function setupVersions(): Promise<string[]> {
   const response = await axios.get(versionsJsonUrl);
   const versions: string[] = response.data;
 
-  core.debug(JSON.stringify(versions, null, 2));
+  console.log(JSON.stringify(versions, null, 2));
 
   core.setOutput('docusarus-versions', {
     'docusaurus-version': versions,
@@ -84,7 +85,7 @@ function buildReplacementDepencencyVersion(
 }
 
 async function testDocusaurusVersion(version: string): Promise<void> {
-  core.info(`Testing Docusaurus version ${version}`);
+  console.log(`Testing Docusaurus version ${version}`);
 
   const packageJson = await getPackageJson();
 
