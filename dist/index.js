@@ -61,9 +61,7 @@ async function setupVersions() {
     const response = await axios_1.default.get(versionsJsonUrl);
     const versions = response.data;
     console.log(JSON.stringify(versions, null, 2));
-    core.setOutput('docusarus-versions', {
-        'docusaurus-version': versions,
-    });
+    core.setOutput('docusaurus-versions', versions);
     return versions;
 }
 function isObject(e) {

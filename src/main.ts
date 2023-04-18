@@ -32,9 +32,7 @@ async function setupVersions(): Promise<string[]> {
 
   console.log(JSON.stringify(versions, null, 2));
 
-  core.setOutput('docusarus-versions', {
-    'docusaurus-version': versions,
-  });
+  core.setOutput('docusaurus-versions', versions);
 
   return versions;
 }
