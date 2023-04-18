@@ -125,7 +125,7 @@ async function testDocusaurusVersion(version) {
     const packageJson = await getPackageJson();
     let dependencies = [];
     let devDependencies = [];
-    const buildPackages = (dependency) => `${dependency}@${version}`;
+    const buildPackages = (dependency) => `${dependency}@^${version}`;
     if (packageJson.dependencies) {
         dependencies = Object.keys(packageJson.dependencies).filter((dependency) => {
             return dependency.includes('docusaurus');

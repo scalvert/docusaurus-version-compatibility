@@ -129,7 +129,7 @@ async function testDocusaurusVersion(version: string): Promise<void> {
   let dependencies: string[] = [];
   let devDependencies: string[] = [];
   const buildPackages = (dependency: string): string =>
-    `${dependency}@${version}`;
+    `${dependency}@^${version}`;
 
   if (packageJson.dependencies) {
     dependencies = Object.keys(packageJson.dependencies).filter(
