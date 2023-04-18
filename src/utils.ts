@@ -76,6 +76,20 @@ export async function testDocusaurusVersion(version: string): Promise<void> {
   await writePackageJson(packageJson);
 }
 
+export function buildReplacementDepencencyVersion(
+  existingVersion: string,
+  newVersion: string
+): string {
+  const firstChar = existingVersion[0];
+
+  // preserve existing floating constraint
+  if (['^', '~'].includes(firstChar)) {
+    return `${firstChar}${newVersion}`;
+  }
+
+  return newVersion;
+}
+
 function isObject(e: unknown): e is Object {
   return e !== null && typeof e === 'object' && !Array.isArray(e);
 }
@@ -90,18 +104,4 @@ async function writePackageJson(packageJson: PackageJson): Promise<void> {
   const packageJsonPath = await getPackageJsonPath();
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-}
-
-function buildReplacementDepencencyVersion(
-  existingVersion: string,
-  newVersion: string
-): string {
-  const firstChar = existingVersion[0];
-
-  // preserve existing floating constraint
-  if (['^', '~'].includes(firstChar)) {
-    return `${firstChar}${newVersion}`;
-  }
-
-  return newVersion;
 }
