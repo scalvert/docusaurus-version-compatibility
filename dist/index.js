@@ -42,6 +42,7 @@ const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
 async function run() {
     try {
         if (core.getInput('setup-versions')) {
+            core.debug('Setting up versions');
             setupVersions();
         }
         else {
