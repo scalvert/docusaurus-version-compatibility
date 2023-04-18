@@ -4,7 +4,7 @@ author: 'scalvert <steve.calvert@gmail.com>'
 inputs:
   version:
     description: 'The version of Docusaurus to test'
-    required: true
+    required: false
   setup-versions:
     description: 'Sets up the version compatibility test with the associated versions'
     required: false
