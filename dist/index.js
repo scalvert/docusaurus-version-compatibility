@@ -58,6 +58,7 @@ async function setupVersions() {
     const versionsJsonUrl = 'https://raw.githubusercontent.com/facebook/docusaurus/main/website/versions.json';
     const response = await axios_1.default.get(versionsJsonUrl);
     const versions = response.data;
+    core.debug(JSON.stringify(versions, null, 2));
     core.setOutput('docusarus-versions', {
         'docusaurus-version': versions,
     });

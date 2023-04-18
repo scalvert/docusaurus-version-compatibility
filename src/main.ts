@@ -27,6 +27,8 @@ async function setupVersions(): Promise<string[]> {
   const response = await axios.get(versionsJsonUrl);
   const versions: string[] = response.data;
 
+  core.debug(JSON.stringify(versions, null, 2));
+
   core.setOutput('docusarus-versions', {
     'docusaurus-version': versions,
   });

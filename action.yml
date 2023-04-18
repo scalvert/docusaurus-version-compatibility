@@ -9,7 +9,7 @@ inputs:
     description: 'Sets up the version compatibility test with the associated versions'
     required: false
 outputs:
-  versions:
+  docusaurus-versions:
     description: 'The versions of Docusaurus to test'
 runs:
   using: 'node16'
