@@ -135,7 +135,7 @@ async function testDocusaurusVersion(version) {
         if (dependencies.length > 0) {
             packageManager.cmd([
                 packageManager.installCmd,
-                dependencies.map(buildPackages).join(' '),
+                ...dependencies.map(buildPackages),
             ]);
         }
     }
@@ -148,7 +148,7 @@ async function testDocusaurusVersion(version) {
             packageManager.cmd([
                 packageManager.installCmd,
                 packageManager.saveDevOption,
-                devDependencies.map(buildPackages).join(' '),
+                ...devDependencies.map(buildPackages),
             ]);
         }
     }
