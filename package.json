@@ -5,13 +5,14 @@
   "description": "A Docusaurus version compatibility tester",
   "main": "lib/main.js",
   "scripts": {
+    "all": "npm run build && npm run format && npm run lint && npm run package && npm test",
     "build": "tsc",
+    "build:docs": "action-docs --update-readme",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "lint": "eslint src/**/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
-    "test": "jest",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
     "@types/node": "^18.15.0",
     "@typescript-eslint/parser": "^5.58.0",
     "@vercel/ncc": "^0.36.1",
+    "action-docs": "^1.2.0",
     "eslint": "^8.38.0",
     "eslint-plugin-github": "^4.7.0",
     "eslint-plugin-jest": "^27.2.1",
