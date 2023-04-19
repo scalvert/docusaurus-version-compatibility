@@ -4,8 +4,6 @@ import { pkgUp } from 'pkg-up';
 import type { PackageJson } from 'type-fest';
 import * as core from '@actions/core';
 
-const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
-
 export const IS_POST = !!core.getState('isPost');
 
 export async function setupVersions(): Promise<string[]> {
@@ -41,39 +39,28 @@ export async function testDocusaurusVersion(version: string): Promise<void> {
 
   const packageJson = await getPackageJson();
 
-  if (packageJson.dependencies) {
-    for (const [dependency, currentVersion] of Object.entries(
-      packageJson.dependencies
-    )) {
-      if (
-        dependency.includes('docusaurus') &&
-        !EXCLUDED_PACKAGES.includes(dependency) &&
-        currentVersion
-      ) {
-        packageJson.dependencies[dependency] =
-          buildReplacementDepencencyVersion(currentVersion, version);
-      }
-    }
-  }
-
-  if (packageJson.devDependencies) {
-    for (const [devDependency, currentVersion] of Object.entries(
-      packageJson.devDependencies
-    )) {
-      if (
-        devDependency.includes('docusaurus') &&
-        !EXCLUDED_PACKAGES.includes(devDependency) &&
-        currentVersion
-      ) {
-        packageJson.devDependencies[devDependency] =
-          buildReplacementDepencencyVersion(currentVersion, version);
-      }
-    }
-  }
+  updateVersion(packageJson.dependencies, version);
+  updateVersion(packageJson.devDependencies, version);
 
   core.info(JSON.stringify(packageJson, null, 2));
 
   await writePackageJson(packageJson);
+}
+
+function updateVersion(
+  dependencies: Partial<Record<string, string>> | undefined,
+  version: string
+): void {
+  if (dependencies) {
+    for (const [dependency, currentVersion] of Object.entries(dependencies)) {
+      if (dependency.includes('@docusaurus') && currentVersion) {
+        dependencies[dependency] = buildReplacementDepencencyVersion(
+          currentVersion,
+          version
+        );
+      }
+    }
+  }
 }
 
 export function buildReplacementDepencencyVersion(

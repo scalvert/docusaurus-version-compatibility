@@ -67,22 +67,22 @@ describe('utils', () => {
       name: 'test',
       version: '0.0.0',
       dependencies: {
-        'docusaurus-plugin': '^1.0.0',
+        '@docusaurus/core': '^2.0.0',
       },
       devDependencies: {
-        'docusaurus-theme': '^2.0.0',
+        '@docusaurus/theme-foo': '^2.0.0',
       },
     });
 
-    await testDocusaurusVersion('1.1.0');
+    await testDocusaurusVersion('2.1.0');
 
     expect(await getPackageJson()).toMatchInlineSnapshot(`
       {
         "dependencies": {
-          "docusaurus-plugin": "^1.1.0",
+          "@docusaurus/core": "^2.1.0",
         },
         "devDependencies": {
-          "docusaurus-theme": "^1.1.0",
+          "@docusaurus/theme-foo": "^2.1.0",
         },
         "name": "test",
         "version": "0.0.0",
@@ -91,8 +91,8 @@ describe('utils', () => {
   });
 
   test('buildReplacementDepencencyVersion', () => {
-    expect(buildReplacementDepencencyVersion('^1.0.0', '1.1.0')).toBe('^1.1.0');
-    expect(buildReplacementDepencencyVersion('~1.0.0', '1.1.0')).toBe('~1.1.0');
-    expect(buildReplacementDepencencyVersion('1.0.0', '1.1.0')).toBe('1.1.0');
+    expect(buildReplacementDepencencyVersion('^2.0.0', '2.1.0')).toBe('^2.1.0');
+    expect(buildReplacementDepencencyVersion('~2.0.0', '2.1.0')).toBe('~2.1.0');
+    expect(buildReplacementDepencencyVersion('2.0.0', '2.1.0')).toBe('2.1.0');
   });
 });
