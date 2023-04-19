@@ -99,7 +99,6 @@ const fs_1 = __importDefault(__nccwpck_require__(7147));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const pkg_up_1 = __nccwpck_require__(4212);
 const core = __importStar(__nccwpck_require__(2186));
-const EXCLUDED_PACKAGES = ['@tsconfig/docusaurus'];
 exports.IS_POST = !!core.getState('isPost');
 async function setupVersions() {
     const versionsJsonUrl = 'https://raw.githubusercontent.com/facebook/docusaurus/main/website/versions.json';
@@ -126,30 +125,21 @@ exports.getPackageJsonPath = getPackageJsonPath;
 async function testDocusaurusVersion(version) {
     core.info(`Testing Docusaurus version ${version}`);
     const packageJson = await getPackageJson();
-    if (packageJson.dependencies) {
-        for (const [dependency, currentVersion] of Object.entries(packageJson.dependencies)) {
-            if (dependency.includes('docusaurus') &&
-                !EXCLUDED_PACKAGES.includes(dependency) &&
-                currentVersion) {
-                packageJson.dependencies[dependency] =
-                    buildReplacementDepencencyVersion(currentVersion, version);
-            }
-        }
-    }
-    if (packageJson.devDependencies) {
-        for (const [devDependency, currentVersion] of Object.entries(packageJson.devDependencies)) {
-            if (devDependency.includes('docusaurus') &&
-                !EXCLUDED_PACKAGES.includes(devDependency) &&
-                currentVersion) {
-                packageJson.devDependencies[devDependency] =
-                    buildReplacementDepencencyVersion(currentVersion, version);
-            }
-        }
-    }
+    updateVersion(packageJson.dependencies, version);
+    updateVersion(packageJson.devDependencies, version);
     core.info(JSON.stringify(packageJson, null, 2));
     await writePackageJson(packageJson);
 }
 exports.testDocusaurusVersion = testDocusaurusVersion;
+function updateVersion(dependencies, version) {
+    if (dependencies) {
+        for (const [dependency, currentVersion] of Object.entries(dependencies)) {
+            if (dependency.includes('@docusaurus') && currentVersion) {
+                dependencies[dependency] = buildReplacementDepencencyVersion(currentVersion, version);
+            }
+        }
+    }
+}
 function buildReplacementDepencencyVersion(existingVersion, newVersion) {
     const firstChar = existingVersion[0];
     // preserve existing floating constraint
