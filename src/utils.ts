@@ -90,18 +90,20 @@ export function buildReplacementDepencencyVersion(
   return newVersion;
 }
 
-function isObject(e: unknown): e is Object {
-  return e !== null && typeof e === 'object' && !Array.isArray(e);
-}
-
-async function getPackageJson(): Promise<PackageJson> {
+export async function getPackageJson(): Promise<PackageJson> {
   const packageJsonPath = await getPackageJsonPath();
 
   return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 }
 
-async function writePackageJson(packageJson: PackageJson): Promise<void> {
+export async function writePackageJson(
+  packageJson: PackageJson
+): Promise<void> {
   const packageJsonPath = await getPackageJsonPath();
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+
+function isObject(e: unknown): e is Object {
+  return e !== null && typeof e === 'object' && !Array.isArray(e);
 }

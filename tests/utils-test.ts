@@ -1,16 +1,36 @@
-import { describe, test, vi } from 'vitest';
-import fs from 'fs';
+import { describe, beforeEach, afterEach, test, expect, vi } from 'vitest';
 import axios from 'axios';
+import { Project } from 'fixturify-project';
 import {
   setupVersions,
   isError,
   getPackageJsonPath,
   testDocusaurusVersion,
   buildReplacementDepencencyVersion,
+  getPackageJson,
+  writePackageJson,
 } from '../src/utils';
 
 describe('utils', () => {
-  test('setupVersions', async ({ expect }) => {
+  let originalCwd: string;
+  let project: Project;
+
+  beforeEach(async () => {
+    project = new Project('test', '0.0.0');
+
+    await project.write();
+
+    originalCwd = process.cwd();
+    process.chdir(project.baseDir);
+  });
+
+  afterEach(() => {
+    project.dispose();
+
+    process.chdir(originalCwd);
+  });
+
+  test('setupVersions', async () => {
     const axiosSpy = vi.spyOn(axios, 'get');
     axiosSpy.mockResolvedValue({ data: ['2.0.0', '1.14.0'] });
 
@@ -20,8 +40,9 @@ describe('utils', () => {
     axiosSpy.mockRestore();
   });
 
-  test('isError', ({ expect }) => {
+  test('isError', () => {
     const error = new Error('Test Error');
+
     expect(isError(error)).toBe(true);
     expect(isError({ message: 'Test Error' })).toBe(true);
     expect(isError({})).toBe(false);
@@ -29,41 +50,47 @@ describe('utils', () => {
     expect(isError('Test Error')).toBe(false);
   });
 
-  test('getPackageJsonPath', async ({ expect }) => {
+  test('getPackageJsonPath', async () => {
+    await project.write({
+      'package.json': JSON.stringify({
+        name: 'test',
+        version: '0.0.0',
+      }),
+    });
+
     const packageJsonPath = await getPackageJsonPath();
     expect(packageJsonPath).toMatch(/package\.json$/);
   });
 
-  test('testDocusaurusVersion', async ({ expect }) => {
-    const packageJson = {
+  test('testDocusaurusVersion', async () => {
+    await writePackageJson({
+      name: 'test',
+      version: '0.0.0',
       dependencies: {
         'docusaurus-plugin': '^1.0.0',
       },
       devDependencies: {
         'docusaurus-theme': '^2.0.0',
       },
-    };
-
-    const readFileSyncSpy = vi.spyOn(fs, 'readFileSync');
-    const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync');
-    readFileSyncSpy.mockReturnValue(JSON.stringify(packageJson));
+    });
 
     await testDocusaurusVersion('1.1.0');
 
-    expect(writeFileSyncSpy).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.stringContaining('"docusaurus-plugin": "^1.1.0"')
-    );
-    expect(writeFileSyncSpy).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.stringContaining('"docusaurus-theme": "^2.0.0"')
-    );
-
-    readFileSyncSpy.mockRestore();
-    writeFileSyncSpy.mockRestore();
+    expect(await getPackageJson()).toMatchInlineSnapshot(`
+      {
+        "dependencies": {
+          "docusaurus-plugin": "^1.1.0",
+        },
+        "devDependencies": {
+          "docusaurus-theme": "^1.1.0",
+        },
+        "name": "test",
+        "version": "0.0.0",
+      }
+    `);
   });
 
-  test('buildReplacementDepencencyVersion', ({ expect }) => {
+  test('buildReplacementDepencencyVersion', () => {
     expect(buildReplacementDepencencyVersion('^1.0.0', '1.1.0')).toBe('^1.1.0');
     expect(buildReplacementDepencencyVersion('~1.0.0', '1.1.0')).toBe('~1.1.0');
     expect(buildReplacementDepencencyVersion('1.0.0', '1.1.0')).toBe('1.1.0');
