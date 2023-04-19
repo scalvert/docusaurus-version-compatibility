@@ -8,6 +8,8 @@
 A Docusaurus version compatibility tester
 <!-- action-docs-description -->
 
+Docusaurus Version Tester is a useful GitHub Action for Docusaurus plugin or theme developers, as it streamlines compatibility testing across multiple Docusaurus versions. By automating the testing process against each published version of Docusaurus, it ensures that plugins and themes maintain compatibility across those versions.
+
 <!-- action-docs-inputs -->
 ## Inputs
 

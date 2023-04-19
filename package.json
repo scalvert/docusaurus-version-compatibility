@@ -2,7 +2,7 @@
   "name": "docusaurus-version-compatibility",
   "version": "0.0.0",
   "private": true,
-  "description": "A Docusaurus version compatibility tester",
+  "description": "A Docusaurus version compatibility tester for plugins and themes",
   "main": "lib/main.js",
   "scripts": {
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test",
