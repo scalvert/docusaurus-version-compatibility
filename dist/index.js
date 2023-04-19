@@ -94,7 +94,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.testDocusaurusVersion = exports.getPackageJsonPath = exports.isError = exports.setupVersions = exports.IS_POST = void 0;
+exports.writePackageJson = exports.getPackageJson = exports.buildReplacementDepencencyVersion = exports.testDocusaurusVersion = exports.getPackageJsonPath = exports.isError = exports.setupVersions = exports.IS_POST = void 0;
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const pkg_up_1 = __nccwpck_require__(4212);
@@ -150,17 +150,6 @@ async function testDocusaurusVersion(version) {
     await writePackageJson(packageJson);
 }
 exports.testDocusaurusVersion = testDocusaurusVersion;
-function isObject(e) {
-    return e !== null && typeof e === 'object' && !Array.isArray(e);
-}
-async function getPackageJson() {
-    const packageJsonPath = await getPackageJsonPath();
-    return JSON.parse(fs_1.default.readFileSync(packageJsonPath, 'utf8'));
-}
-async function writePackageJson(packageJson) {
-    const packageJsonPath = await getPackageJsonPath();
-    fs_1.default.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-}
 function buildReplacementDepencencyVersion(existingVersion, newVersion) {
     const firstChar = existingVersion[0];
     // preserve existing floating constraint
@@ -168,6 +157,20 @@ function buildReplacementDepencencyVersion(existingVersion, newVersion) {
         return `${firstChar}${newVersion}`;
     }
     return newVersion;
+}
+exports.buildReplacementDepencencyVersion = buildReplacementDepencencyVersion;
+async function getPackageJson() {
+    const packageJsonPath = await getPackageJsonPath();
+    return JSON.parse(fs_1.default.readFileSync(packageJsonPath, 'utf8'));
+}
+exports.getPackageJson = getPackageJson;
+async function writePackageJson(packageJson) {
+    const packageJsonPath = await getPackageJsonPath();
+    fs_1.default.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+exports.writePackageJson = writePackageJson;
+function isObject(e) {
+    return e !== null && typeof e === 'object' && !Array.isArray(e);
 }
 
 
